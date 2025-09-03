@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Nexus | AI Strategy Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg">
+    <style>
+        :root {
+            --primary: #00f3ff;
+            --secondary: #ff00c8;
+            --bg-dark: #0a0e17;
+            --bg-light: #131a2d;
+            --text: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 243, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 85% 30%, rgba(255, 0, 200, 0.05) 0%, transparent 20%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            aspect-ratio: 1/1;
+        }
+
+        .cell {
+            background: var(--bg-light);
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cell:hover {
+            transform: scale(0.95);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .cell.player::before {
+            content: '';
+            width: 70%;
+            height: 70%;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .cell.ai::before {
+            content: '';
+            width: 70%;
+            height: 70%;
+            background: var(--secondary);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--secondary);
+        }
+
+        .cell.valid-move::after {
+            content: '';
+            position: absolute;
+            width: 20%;
+            height: 20%;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+        }
+
+        .sidebar {
+            background: rgba(19, 26, 45, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(255, 0, 200, 0.2);
+        }
+
+        .status {
+            margin-bottom: 20px;
+        }
+
+        .status h2 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .ai-thinking {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            min-height: 100px;
+        }
+
+        .ai-thinking p {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        .btn {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 243, 255, 0.4);
+        }
+
+        .difficulty-selector {
+            margin: 20px 0;
+        }
+
+        .difficulty-selector select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            background: var(--bg-light);
+            color: white;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+        }
+
+        .score {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-board {
+                aspect-ratio: 1/1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">NEURAL NEXUS</div>
+            <div class="score">SCORE: <span id="score-value">0</span></div>
+        </header>
+        
+        <div class="game-container">
+            <div class="game-board" id="game-board">
+                <!-- Cells will be generated by JavaScript -->
+            </div>
+            
+            <div class="sidebar">
+                <div class="status">
+                    <h2>GAME STATUS</h2>
+                    <p id="status-message">Place your first move to begin</p>
+                </div>
+                
+                <div class="difficulty-selector">
+                    <label for="difficulty">AI DIFFICULTY:</label>
+                    <select id="difficulty">
+                        <option value="easy">NOVICE</option>
+                        <option value="medium">ADEPT</option>
+                        <option value="hard">MASTER</option>
+                        <option value="impossible">NEURAL NETWORK</option>
+                    </select>
+                </div>
+                
+                <div class="ai-thinking">
+                    <h2>AI THOUGHTS</h2>
+                    <p id="ai-thought">Waiting for your move...</p>
+                </div>
+                
+                <button class="btn" id="restart-btn">NEW GAME</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const gameBoard = document.getElementById('game-board');
+            const statusMessage = document.getElementById('status-message');
+            const aiThought = document.getElementById('ai-thought');
+            const restartBtn = document.getElementById('restart-btn');
+            const difficultySelect = document.getElementById('difficulty');
+            const scoreValue = document.getElementById('score-value');
+            
+            let board = [];
+            let currentPlayer = 'player';
+            let gameActive = true;
+            let score = 0;
+            let aiThinking = false;
+            
+            // Initialize game board
+            function initBoard() {
+                gameBoard.innerHTML = '';
+                board = Array(8).fill().map(() => Array(8).fill(0));
+                
+                for (let i = 0; i < 8; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        const cell = document.createElement('div');
+                        cell.classList.add('cell');
+                        cell.dataset.row = i;
+                        cell.dataset.col = j;
+                        cell.addEventListener('click', () => cellClicked(i, j));
+                        gameBoard.appendChild(cell);
+                    }
+                }
+                
+                // Set initial pieces
+                board[3][3] = 1; // 1 represents player
+                board[3][4] = 2; // 2 represents AI
+                board[4][3] = 2;
+                board[4][4] = 1;
+                
+                updateBoard();
+                updateStatus();
+                highlightValidMoves();
+            }
+            
+            // Update visual board
+            function updateBoard() {
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    
+                    cell.className = 'cell';
+                    if (board[row][col] === 1) {
+                        cell.classList.add('player');
+                    } else if (board[row][col] === 2) {
+                        cell.classList.add('ai');
+                    }
+                });
+            }
+            
+            // Highlight valid moves
+            function highlightValidMoves() {
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    
+                    if (isValidMove(row, col, 1)) {
+                        cell.classList.add('valid-move');
+                    }
+                });
+            }
+            
+            // Handle cell click
+            function cellClicked(row, col) {
+                if (!gameActive || aiThinking || board[row][col] !== 0) return;
+                
+                if (isValidMove(row, col, 1)) {
+                    makeMove(row, col, 1);
+                    updateBoard();
+                    
+                    if (checkGameOver()) {
+                        endGame();
+                        return;
+                    }
+                    
+                    currentPlayer = 'ai';
+                    updateStatus();
+                    aiThinking = true;
+                    aiThought.textContent = "Analyzing your strategy...";
+                    
+                    // AI makes a move after a short delay
+                    setTimeout(() => {
+                        const difficulty = difficultySelect.value;
+                        const move = getAIMove(difficulty);
+                        
+                        if (move) {
+                            makeMove(move.row, move.col, 2);
+                            aiThought.textContent = getAIThought(difficulty);
+                        }
+                        
+                        updateBoard();
+                        aiThinking = false;
+                        
+                        if (checkGameOver()) {
+                            endGame();
+                            return;
+                        }
+                        
+                        currentPlayer = 'player';
+                        updateStatus();
+                        highlightValidMoves();
+                    }, 1000);
+                }
+            }
+            
+            // Get a random AI thought based on difficulty
+            function getAIThought(difficulty) {
+                const thoughts = {
+                    easy: [
+                        "Let's try this move...",
+                        "Hmm, interesting strategy...",
+                        "I'm still learning!",
+                        "You're pretty good at this!"
+                    ],
+                    medium: [
+                        "I see your strategy developing...",
+                        "You've fallen into my trap!",
+                        "This is getting interesting...",
+                        "I'm adapting to your play style."
+                    ],
+                    hard: [
+                        "Your patterns are becoming predictable...",
+                        "I've calculated 42 possible outcomes...",
+                        "You're making this too easy...",
+                        "My algorithms are learning from you."
+                    ],
+                    impossible: [
+                        "My neural network predicts your defeat in 7 moves.",
+                        "I've analyzed 10,000 possible scenarios in nanoseconds.",
+                        "You're playing against a superior intelligence.",
+                        "Resistance is futile."
+                    ]
+                };
+                
+                const difficultyThoughts = thoughts[difficulty] || thoughts.easy;
+                return difficultyThoughts[Math.floor(Math.random() * difficultyThoughts.length)];
+            }
+            
+            // Check if move is valid
+            function isValidMove(row, col, player) {
+                if (board[row][col] !== 0) return false;
+                
+                const directions = [
+                    [-1, -1], [-1, 0], [-1, 1],
+                    [0, -1],           [0, 1],
+                    [1, -1],  [1, 0],  [1, 1]
+                ];
+                
+                for (const [dx, dy] of directions) {
+                    let r = row + dx;
+                    let c = col + dy;
+                    let foundOpponent = false;
+                    
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (board[r][c] === 0) break;
+                        
+                        if (board[r][c] !== player) {
+                            foundOpponent = true;
+                        } else if (foundOpponent) {
+                            return true;
+                        } else {
+                            break;
+                        }
+                        
+                        r += dx;
+                        c += dy;
+                    }
+                }
+                
+                return false;
+            }
+            
+            // Make a move
+            function makeMove(row, col, player) {
+                board[row][col] = player;
+                
+                const directions = [
+                    [-1, -1], [-1, 0], [-1, 1],
+                    [0, -1],           [0, 1],
+                    [1, -1],  [1, 0],  [1, 1]
+                ];
+                
+                for (const [dx, dy] of directions) {
+                    let r = row + dx;
+                    let c = col + dy;
+                    let toFlip = [];
+                    
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (board[r][c] === 0) break;
+                        
+                        if (board[r][c] !== player) {
+                            toFlip.push([r, c]);
+                        } else if (toFlip.length > 0) {
+                            // Flip all pieces in between
+                            for (const [flipRow, flipCol] of toFlip) {
+                                board[flipRow][flipCol] = player;
+                            }
+                            break;
+                        } else {
+                            break;
+                        }
+                        
+                        r += dx;
+                        c += dy;
+                    }
+                }
+            }
+            
+            // Get AI move based on difficulty
+            function getAIMove(difficulty) {
+                const validMoves = [];
+                
+                // Find all valid moves
+                for (let i = 0; i < 8; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        if (board[i][j] === 0 && isValidMove(i, j, 2)) {
+                            validMoves.push({row: i, col: j});
+                        }
+                    }
+                }
+                
+                if (validMoves.length === 0) return null;
+                
+                // Different strategies based on difficulty
+                switch(difficulty) {
+                    case 'easy':
+                        // Random move
+                        return validMoves[Math.floor(Math.random() * validMoves.length)];
+                        
+                    case 'medium':
+                        // Prefer center positions
+                        const centerMoves = validMoves.filter(move => 
+                            move.row >= 2 && move.row <= 5 && move.col >= 2 && move.col <= 5
+                        );
+                        if (centerMoves.length > 0) {
+                            return centerMoves[Math.floor(Math.random() * centerMoves.length)];
+                        }
+                        return validMoves[Math.floor(Math.random() * validMoves.length)];
+                        
+                    case 'hard':
+                        // Try to maximize captures
+                        let bestMove = null;
+                        let maxCaptures = 0;
+                        
+                        for (const move of validMoves) {
+                            const captures = countCaptures(move.row, move.col, 2);
+                            if (captures > maxCaptures) {
+                                maxCaptures = captures;
+                                bestMove = move;
+                            }
+                        }
+                        
+                        return bestMove || validMoves[Math.floor(Math.random() * validMoves.length)];
+                        
+                    case 'impossible':
+                        // Even more strategic - prioritize corners and edges
+                        // First, check for corner moves
+                        const corners = validMoves.filter(move => 
+                            (move.row === 0 || move.row === 7) && (move.col === 0 || move.col === 7)
+                        );
+                        if (corners.length > 0) {
+                            return corners[Math.floor(Math.random() * corners.length)];
+                        }
+                        
+                        // Then check for edge moves
+                        const edges = validMoves.filter(move => 
+                            move.row === 0 || move.row === 7 || move.col === 0 || move.col === 7
+                        );
+                        if (edges.length > 0) {
+                            return edges[Math.floor(Math.random() * edges.length)];
+                        }
+                        
+                        // Then maximize captures
+                        let bestImpossibleMove = null;
+                        let maxImpossibleCaptures = 0;
+                        
+                        for (const move of validMoves) {
+                            const captures = countCaptures(move.row, move.col, 2);
+                            if (captures > maxImpossibleCaptures) {
+                                maxImpossibleCaptures = captures;
+                                bestImpossibleMove = move;
+                            }
+                        }
+                        
+                        return bestImpossibleMove || validMoves[Math.floor(Math.random() * validMoves.length)];
+                }
+            }
+            
+            // Count how many pieces would be captured by a move
+            function countCaptures(row, col, player) {
+                let captureCount = 0;
+                const directions = [
+                    [-1, -1], [-1, 0], [-1, 1],
+                    [0, -1],           [0, 1],
+                    [1, -1],  [1, 0],  [1, 1]
+                ];
+                
+                for (const [dx, dy] of directions) {
+                    let r = row + dx;
+                    let c = col + dy;
+                    let directionCaptures = 0;
+                    
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (board[r][c] === 0) break;
+                        
+                        if (board[r][c] !== player) {
+                            directionCaptures++;
+                        } else {
+                            captureCount += directionCaptures;
+                            break;
+                        }
+                        
+                        r += dx;
+                        c += dy;
+                    }
+                }
+                
+                return captureCount;
+            }
+            
+            // Check if game is over
+            function checkGameOver() {
+                // Check if board is full
+                for (let i = 0; i < 8; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        if (board[i][j] === 0) {
+                            // Check if any player can move
+                            if (hasValidMoves(1) || hasValidMoves(2)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            // Check if a player has valid moves
+            function hasValidMoves(player) {
+                for (let i = 0; i < 8; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        if (board[i][j] === 0 && isValidMove(i, j, player)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            // End the game
+            function endGame() {
+                gameActive = false;
+                
+                // Count pieces
+                let playerCount = 0;
+                let aiCount = 0;
+                
+                for (let i = 0; i < 8; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        if (board[i][j] === 1) playerCount++;
+                        if (board[i][j] === 2) aiCount++;
+                    }
+                }
+                
+                if (playerCount > aiCount) {
+                    statusMessage.textContent = `You win! ${playerCount} - ${aiCount}`;
+                    score += 10;
+                } else if (aiCount > playerCount) {
+                    statusMessage.textContent = `AI wins! ${aiCount} - ${playerCount}`;
+                } else {
+                    statusMessage.textContent = "It's a tie!";
+                    score += 5;
+                }
+                
+                scoreValue.textContent = score;
+            }
+            
+            // Update status message
+            function updateStatus() {
+                statusMessage.textContent = currentPlayer === 'player' 
+                    ? "Your turn" 
+                    : "AI is thinking...";
+            }
+            
+            // Restart game
+            restartBtn.addEventListener('click', function() {
+                gameActive = true;
+                currentPlayer = 'player';
+                initBoard();
+                aiThought.textContent = "New game initialized. Let's see what you've got.";
+            });
+            
+            // Initialize the game
+            initBoard();
+        });
+    </script>
+</body>
+</html>
