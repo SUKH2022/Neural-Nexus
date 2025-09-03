@@ -6,7 +6,7 @@ A futuristic AI strategy game where you challenge increasingly intelligent neura
 
 [![Play Now](https://img.shields.io/badge/Play-Now-00f3ff?style=for-the-badge&logo=game)](https://sukh2022.github.io/Neural-Nexus/)
 
-![Game Screenshot](https://i.imgur.com/placeholder.png) 
+![Game Screenshot](img/gameview.png) 
 *Replace with actual screenshot from your game*
 
 ## 🚀 Features
